@@ -184,23 +184,7 @@ function _M.detect(cookie_name)
   end
 
   ngx.var.device = device
-
-  -- local age = 31536000 --10 years
-  -- _, err = cookies.set({
-  --   key = cookie_name,
-  --   value = device,
-  --   path = "/",
-  --   domain = ngx.var.http_host,
-  --   secure = false, 
-  --   httponly = true,
-  --   expires = os.date("%a, %d %b %Y %X GMT", os.time() + age),
-  --   max_age = age,
-  -- })
-  -- if err then
-  --   log(ngx.ERR, "error: ", err)
-  --   return 'false'
-  -- end
-
+  
   return 'true'
 end
 
