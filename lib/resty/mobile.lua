@@ -5,8 +5,7 @@ local ERR           = ngx.ERR
 local ngx_header    = ngx.header
 local shared        = ngx.shared
 local json          = require "cjson"
-local ck            = require "resty.cookie"
-
+local resty_cookie  = require "resty.cookie"
 
 -- explode(seperator, string)
 function explode(d,p)
@@ -27,11 +26,12 @@ function explode(d,p)
   return t
 end
 
+function
+
 
 local _M = {}
 
 _M._VERSION = '0.01'
-
 
 local mt = { __index = _M }
 
@@ -92,28 +92,36 @@ end
 
 function _M.detect(cookie_name)
   if cookie_name then
-    local cookie, err = ck:new()
-    if not cookie then
+    local cookies, err = resty_cookie:new()
+    if not cookies then
       log(ngx.ERR, err)
       return 'false'
     end
 
     -- get mobile cookie
-    local field, err = cookie:get(cookie_name)
+    local field, err = cookies:get(cookie_name)
     if field then
-      ngx.var.mobile_device = field
+      ngx.var.device = field
       return 'true'
     end
+
+    -- check cookie mode
+    local cookie_value, err = cookies:get("mode")
+    if cookie_value then 
+      ngx.var.device = "desktop"
+      return 'true'
+    end
+
   end
 
-  local mobile_device = 'computer'
+  local device = 'desktop'
 
   -- check headers
   for key, value in pairs(explode("|",shared.mobile:get("headers"))) do
     if ngx.var[value] then
       local m, err = ngx.re.match( ngx.var[value], shared.mobile:get("header:"..value))
       if m then
-        mobile_device = 'phone'
+        device = 'mobile'
       else
         if err then
           log(ngx.ERR, "error: ", err)
@@ -134,7 +142,7 @@ function _M.detect(cookie_name)
   -- check against phones
   local m, err = ngx.re.match( _uastr, shared.mobile:get("phones"))
   if m then
-    mobile_device = 'phone'
+    device = 'mobile'
   else
     if err then
       log(ngx.ERR, "error: ", err)
@@ -145,7 +153,7 @@ function _M.detect(cookie_name)
   -- check against browsers
   local m, err = ngx.re.match( _uastr, shared.mobile:get("browsers"))
   if m then
-    mobile_device = 'phone'
+    device = 'mobile'
   else
     if err then
       log(ngx.ERR, "error: ", err)
@@ -156,7 +164,7 @@ function _M.detect(cookie_name)
   -- check against os
   local m, err = ngx.re.match( _uastr, shared.mobile:get("os"))
   if m then
-    mobile_device = 'phone'
+    device = 'mobile'
   else
     if err then
       log(ngx.ERR, "error: ", err)
@@ -167,7 +175,7 @@ function _M.detect(cookie_name)
   -- check against tablets
   local m, err = ngx.re.match( _uastr, shared.mobile:get("tablets"))
   if m then
-      mobile_device = 'tablet'
+      device = 'tablet'
   else
     if err then
       log(ngx.ERR, "error: ", err)
@@ -175,7 +183,24 @@ function _M.detect(cookie_name)
     end
   end
 
-  ngx.var.mobile_device = mobile_device
+  ngx.var.device = device
+
+  -- local age = 31536000 --10 years
+  -- _, err = cookies.set({
+  --   key = cookie_name,
+  --   value = device,
+  --   path = "/",
+  --   domain = ngx.var.http_host,
+  --   secure = false, 
+  --   httponly = true,
+  --   expires = os.date("%a, %d %b %Y %X GMT", os.time() + age),
+  --   max_age = age,
+  -- })
+  -- if err then
+  --   log(ngx.ERR, "error: ", err)
+  --   return 'false'
+  -- end
+
   return 'true'
 end
 
