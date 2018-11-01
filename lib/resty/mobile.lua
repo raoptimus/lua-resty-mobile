@@ -26,8 +26,6 @@ function explode(d,p)
   return t
 end
 
-function
-
 
 local _M = {}
 
@@ -184,7 +182,7 @@ function _M.detect(cookie_name)
   end
 
   ngx.var.device = device
-  
+
   return 'true'
 end
 
